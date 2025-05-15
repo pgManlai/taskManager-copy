@@ -1,8 +1,8 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "./components/ui/toaster";
-import { TooltipProvider } from "./components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import Tasks from "@/pages/tasks";
@@ -14,13 +14,13 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Header } from "@/components/layout/header";
 import { NotificationPanel } from "@/components/layout/notification-panel";
-import { useMediaQuery } from "@/hooks/use-mobile";
+
 
 function MainLayout({ children }: { children: React.ReactNode }) {
   const isDesktop = useMediaQuery("(min-width: 1024px)");
-  
+
   return (
-    <div className="bg-gray-50 flex min-h-screen">
+    <div className="bg-gray-50 dark:bg-gray-900 flex min-h-screen">
       <Sidebar />
       <div className="flex flex-col flex-1 ml-16 md:ml-60">
         <Header />
