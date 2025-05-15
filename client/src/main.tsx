@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from "react-dom/client";
 import App from "@/App";
 import "@/index.css";
-import { ThemeProvider } from "@mui/material/styles";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Failed to find the root element");

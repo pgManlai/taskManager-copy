@@ -13,7 +13,7 @@ import {
 } from "react-hook-form"
 
 import { cn } from "@/lib/utils"
-import { Label } from "../label"
+import { Label } from "./label"
 
 const Form = FormProvider
 
@@ -36,7 +36,9 @@ const FormField = <
 }: ControllerProps<TFieldValues, TName>) => {
   return (
     <FormFieldContext.Provider value={{ name: props.name }}>
-      <Controller {...props} />
+      <>
+        {Controller(props)}
+      </>
     </FormFieldContext.Provider>
   )
 }
