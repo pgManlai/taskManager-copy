@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { 
   HomeIcon, 
@@ -28,7 +28,7 @@ interface User {
 }
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const [location] = useLocation().pathname;
   
   const { data: user } = useQuery<User>({
     queryKey: ['/api/users/current'],
@@ -47,7 +47,7 @@ export function Sidebar() {
             {navItems.map((item) => (
               <Link
                 key={item.href}
-                href={item.href}
+                to={item.href}
                 className={cn(
                   "sidebar-link",
                   location === item.href && "active"
@@ -61,7 +61,7 @@ export function Sidebar() {
           
           <div className="mt-auto mb-8 px-2 w-full">
             <Link
-              href="/profile"
+              to="/profile"
               className={cn(
                 "sidebar-link",
                 location === "/profile" && "active"
