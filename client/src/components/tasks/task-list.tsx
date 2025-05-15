@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { useForm } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -20,7 +20,7 @@ import { CalendarIcon } from "lucide-react";
 
 interface User {
   id: number;
-  username: string;
+  // Removed unused property 'username'
   fullName: string;
   email: string;
   avatar?: string;
@@ -59,8 +59,8 @@ const taskFormSchema = z.object({
     message: "Title must be at least 3 characters long",
   }),
   description: z.string().optional(),
-  status: z.string().default("todo"),
-  priority: z.string().default("medium"),
+  status: z.string({ required_error: "Status is required" }),
+  priority: z.string({ required_error: "Priority is required" }),
   dueDate: z.date().optional(),
   assignedTo: z.number().optional(),
   teamId: z.number().optional()
@@ -87,7 +87,7 @@ export function TaskList({ title = "Tasks", isTrashView = false }: TaskListProps
     queryKey: ['/api/users/current'],
   });
   
-  const form = useForm<z.infer<typeof taskFormSchema>>({
+  const form = useForm<z.infer<typeof taskFormSchema>, any, z.infer<typeof taskFormSchema>>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: {
       title: "",
@@ -194,7 +194,7 @@ export function TaskList({ title = "Tasks", isTrashView = false }: TaskListProps
                   </DialogHeader>
                   
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleFormSubmit as SubmitHandler<z.infer<typeof taskFormSchema>>)} className="space-y-4">
                       <FormField
                         control={form.control}
                         name="title"
