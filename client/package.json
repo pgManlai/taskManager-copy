@@ -9,11 +9,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.76.1",
+    "axios": "^1.9.0",
+    "express": "^5.1.0",
+    "nanoid": "^5.1.5",
     "vue": "^3.5.13"
   },
   "devDependencies": {
+    "@replit/vite-plugin-cartographer": "^0.2.0",
+    "@replit/vite-plugin-runtime-error-modal": "^0.0.3",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.18",
+    "@types/react": "^19.1.4",
+    "@vitejs/plugin-react": "^4.4.1",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/tsconfig": "^0.7.0",
+    "ts-node": "^10.9.2",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
     "vue-tsc": "^2.2.8"
