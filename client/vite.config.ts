@@ -31,6 +31,10 @@ export default defineConfig(async () => {
       outDir: path.resolve(__dirname, "../dist/public"),
       emptyOutDir: true,
     },
+    css: {
+      postcss: path.resolve(__dirname, "./postcss.config.js"),
+    },
+    
     server: {
       port: 3000,
       open: true,

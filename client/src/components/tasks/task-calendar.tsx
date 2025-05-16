@@ -1,129 +1,113 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useGetTasksQuery } from '@/redux/api/apiSlice';
+
+interface TeamMember {
+  name: string;
+  title: string;
+  email: string;
+}
 
 interface Task {
   id: number;
   title: string;
   description?: string;
-  status: string;
-  priority: string;
-  dueDate?: string;
-  assignedTo?: number;
-  createdBy: number;
-  teamId?: number;
-  isDeleted: boolean;
-}
-
-interface TaskDayProps {
-  day: Date;
-  tasks: Task[];
-  onClick: (day: Date, tasks: Task[]) => void;
-}
-
-function TaskDay({ day, tasks, onClick }: TaskDayProps) {
-  const hasOverdue = tasks.some(task => 
-    task.status !== 'completed' && new Date(task.dueDate!) < new Date()
-  );
-  const hasUrgent = tasks.some(task => task.priority === 'high');
-  
-  return (
-    <div 
-      className={cn(
-        "h-full w-full relative",
-        tasks.length > 0 && "font-medium",
-        hasOverdue && "text-red-600"
-      )}
-      onClick={() => onClick(day, tasks)}
-    >
-      <div className="absolute top-0 right-0">
-        {tasks.length > 0 && (
-          <Badge 
-            className={cn(
-              "text-[0.6rem] min-w-4 h-4 px-1 rounded-full",
-              hasOverdue && "bg-red-500",
-              hasUrgent && !hasOverdue && "bg-orange-500",
-              !hasUrgent && !hasOverdue && "bg-blue-500"
-            )}
-          >
-            {tasks.length}
-          </Badge>
-        )}
-      </div>
-    </div>
-  );
+  stage: string;
+  priority: string;        // high, medium, low
+  startDate?: string;
+  endDate?: string | null;
+  isTrashed: boolean;
+  team?: TeamMember[];
+  assets?: string[];
+  links?: string[];
+  ownerId?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface TaskCalendarProps {
-  onSelectDate: (date: Date, tasks: Task[]) => void;
+  onSelectDate: (date: Date, tasksForDate: Task[]) => void;
 }
 
 export function TaskCalendar({ onSelectDate }: TaskCalendarProps) {
   const [selectedMonth, setSelectedMonth] = useState<Date>(new Date());
-  
-  const { data: tasks = [] } = useQuery<Task[]>({
-    queryKey: ['/api/tasks', { isDeleted: false }],
-  });
-  
-  // Group tasks by their due dates
-  const tasksByDate = tasks.reduce((acc, task) => {
-    if (!task.dueDate) return acc;
-    
-    const date = new Date(task.dueDate);
-    const dateStr = date.toDateString();
-    
-    if (!acc[dateStr]) {
-      acc[dateStr] = [];
-    }
-    
-    acc[dateStr].push(task);
-    return acc;
-  }, {} as Record<string, Task[]>);
-  
-  // Handle day click on calendar
+
+  // RTK Query ашиглан task-ууд татах
+  const { data: tasks = [], isLoading } = useGetTasksQuery();
+
+  // isTrashed=false filter хийсэн таскууд
+  const visibleTasks = useMemo(() => tasks.filter(task => !task.isTrashed), [tasks]);
+
+  // Огноогоор бүлэглэх
+  const tasksByDate = useMemo(() => {
+    return visibleTasks.reduce<Record<string, Task[]>>((acc, task) => {
+      if (!task.endDate) return acc;
+      const dateStr = new Date(task.endDate).toDateString();
+      if (!acc[dateStr]) acc[dateStr] = [];
+      acc[dateStr].push(task);
+      return acc;
+    }, {});
+  }, [visibleTasks]);
+
+  // Priority болон overdue тэмдэглэгээ
+  const highPriorityDates = useMemo(() => {
+    return visibleTasks
+      .filter(task => task.priority === 'high' && task.endDate)
+      .map(task => new Date(task.endDate!));
+  }, [visibleTasks]);
+
+  const overdueDates = useMemo(() => {
+    const today = new Date();
+    return visibleTasks
+      .filter(task => task.endDate && new Date(task.endDate) < today)
+      .map(task => new Date(task.endDate!));
+  }, [visibleTasks]);
+
+  const hasTasksDates = useMemo(() => {
+    return Object.keys(tasksByDate).map(dateStr => new Date(dateStr));
+  }, [tasksByDate]);
+
+  // Өдөр сонгоход ажиллах функц
   const handleDayClick = (day: Date) => {
     const dateStr = day.toDateString();
-    const dayTasks = tasksByDate[dateStr] || [];
-    onSelectDate(day, dayTasks);
+    onSelectDate(day, tasksByDate[dateStr] || []);
   };
-  
-  // Navigate between months
+
+  // Сар шилжүүлэх
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(selectedMonth);
-    if (direction === 'prev') {
-      newDate.setMonth(newDate.getMonth() - 1);
-    } else {
-      newDate.setMonth(newDate.getMonth() + 1);
-    }
+    newDate.setMonth(direction === 'prev' ? newDate.getMonth() - 1 : newDate.getMonth() + 1);
     setSelectedMonth(newDate);
   };
-  
+
   return (
     <Card className="border shadow-sm rounded-xl overflow-hidden">
-      <CardHeader className="px-6 py-4 bg-white border-b border-gray-100 flex flex-row items-center justify-between space-y-0">
+      <CardHeader className="flex justify-between items-center px-6 py-4 bg-white border-b border-gray-100">
         <CardTitle className="text-lg font-medium">Task Calendar</CardTitle>
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="h-8 w-8"
             onClick={() => navigateMonth('prev')}
+            aria-label="Previous Month"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium">
             {selectedMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
           </span>
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             className="h-8 w-8"
             onClick={() => navigateMonth('next')}
+            aria-label="Next Month"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -139,12 +123,17 @@ export function TaskCalendar({ onSelectDate }: TaskCalendarProps) {
           selected={undefined}
           onSelect={(day) => day && handleDayClick(day)}
           modifiers={{
-            hasTasks: Object.keys(tasksByDate).map(dateStr => new Date(dateStr))
+            hasTasks: hasTasksDates,
+            highPriority: highPriorityDates,
+            overdue: overdueDates,
           }}
           modifiersClassNames={{
-            hasTasks: "has-tasks"
+            hasTasks: "has-tasks",
+            highPriority: "high-priority",
+            overdue: "overdue",
           }}
         />
+
         <div className="mt-4 flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center">
             <Badge className="h-2 w-2 p-0 rounded-full bg-blue-500 mr-1" />
